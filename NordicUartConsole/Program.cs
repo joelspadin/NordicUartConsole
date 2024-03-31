@@ -3,16 +3,28 @@ using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using ConsoleTools;
 using NordicUartConsole;
+using Windows.Media.Capture;
 
-var rootCommand = new RootCommand("Nordic UART Service (NUS) console");
+var deviceArg = new Argument<string>(
+	name: "device",
+	description: "Name of the BLE device to which to connect")
+{
+	Arity = ArgumentArity.ZeroOrOne,
+};
+
+var rootCommand = new RootCommand("Nordic UART Service (NUS) console")
+{
+	deviceArg,
+};
 
 rootCommand.SetHandler(async (context) =>
 {
+	var deviceName = context.ParseResult.GetValueForArgument(deviceArg);
 	var token = context.GetCancellationToken();
 
 	try {
 		var services = await UartConsole.FindConsolesAsync();
-		using var console = await SelectConsoleAsync(services.ToList(), token);
+		using var console = await SelectConsoleAsync(services.ToList(), deviceName, token);
 
 		if (console == null)
 		{
@@ -46,8 +58,13 @@ var parser = new CommandLineBuilder(rootCommand)
 
 return await parser.InvokeAsync(args);
 
-async static Task<UartConsole?> SelectConsoleAsync(List<UartConsole> consoles, CancellationToken cancellationToken)
+async static Task<UartConsole?> SelectConsoleAsync(List<UartConsole> consoles, string deviceName, CancellationToken cancellationToken)
 {
+	if (!string.IsNullOrEmpty(deviceName))
+	{
+		return consoles.Find((c) => c.Device.Name.Equals(deviceName, StringComparison.CurrentCultureIgnoreCase));
+	}
+
 	if (consoles.Count > 1)
 	{
 		return await ShowConsoleMenuAsync(consoles, cancellationToken);
