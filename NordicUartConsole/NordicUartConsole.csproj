@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
+    <AssemblyName>nus</AssemblyName>
     <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
