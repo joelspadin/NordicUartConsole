@@ -1,9 +1,7 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
-using ConsoleTools;
 using NordicUartConsole;
-using Windows.Media.Capture;
 
 var deviceArg = new Argument<string>(
 	name: "device",
@@ -24,7 +22,7 @@ rootCommand.SetHandler(async (context) =>
 
 	try {
 		var services = await UartConsole.FindConsolesAsync();
-		using var console = await SelectConsoleAsync(services.ToList(), deviceName, token);
+		using var console = SelectConsole(services.ToList(), deviceName, token);
 
 		if (console == null)
 		{
@@ -58,7 +56,7 @@ var parser = new CommandLineBuilder(rootCommand)
 
 return await parser.InvokeAsync(args);
 
-async static Task<UartConsole?> SelectConsoleAsync(List<UartConsole> consoles, string deviceName, CancellationToken cancellationToken)
+static UartConsole? SelectConsole(List<UartConsole> consoles, string deviceName, CancellationToken cancellationToken)
 {
 	if (!string.IsNullOrEmpty(deviceName))
 	{
@@ -67,38 +65,10 @@ async static Task<UartConsole?> SelectConsoleAsync(List<UartConsole> consoles, s
 
 	if (consoles.Count > 1)
 	{
-		return await ShowConsoleMenuAsync(consoles, cancellationToken);
+		var menu = new ConsoleMenu<UartConsole>("Select a device:", consoles, (c) => c.Device.Name);
+
+		return menu.Show(cancellationToken);
 	}
 
 	return consoles.FirstOrDefault();
-}
-
-async static Task<UartConsole?> ShowConsoleMenuAsync(List<UartConsole> consoles, CancellationToken cancellationToken)
-{
-	UartConsole? result = null;
-
-	// TODO: write a custom menu which hides the cursor and overwrites each line
-	// without first clearing the console.
-	var menu = new ConsoleMenu()
-		.Configure(config =>
-		{
-			config.WriteHeaderAction = () => Console.WriteLine("Select a device:");
-			config.WriteItemAction = item => Console.Write("{0}", item.Name);
-			config.Selector = "> ";
-			config.SelectedItemBackgroundColor = Console.BackgroundColor;
-			config.SelectedItemForegroundColor = Console.ForegroundColor;
-		});
-
-	foreach (var console in consoles)
-	{
-		menu.Add(console.Device.Name, () =>
-		{
-			result = console;
-			menu.CloseMenu();
-		});
-	}
-
-	await menu.ShowAsync(cancellationToken);
-
-	return result;
 }
