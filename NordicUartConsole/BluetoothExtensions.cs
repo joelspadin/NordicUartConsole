@@ -1,20 +1,19 @@
-﻿using Windows.Devices.Bluetooth;
+﻿namespace NordicUartConsole;
+
+using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 
-namespace NordicUartConsole
+internal static class BluetoothExtensions
 {
-	internal static class BluetoothExtensions
+	static public async Task<BluetoothLEDevice?> GetBluetoothLEDeviceAsync(this DeviceInformation device)
 	{
-		static public async Task<BluetoothLEDevice?> GetBluetoothLEDeviceAsync(this DeviceInformation device)
+		try
 		{
-			try
-			{
-				return await BluetoothLEDevice.FromIdAsync(device.Id);
-			}
-			catch (ArgumentException)
-			{
-				return null;
-			}
+			return await BluetoothLEDevice.FromIdAsync(device.Id);
+		}
+		catch (ArgumentException)
+		{
+			return null;
 		}
 	}
 }
